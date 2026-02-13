@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>To 彭彭寶: 台北 ✈️ 達拉斯</title>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Coolors 夢幻配色 */
+            --palette-1: #cdb4db; /* 粉紫 (背景) */
+            --palette-2: #ffc8dd; /* 淺粉 */
+            --palette-3: #ffafcc; /* 亮粉 (主要色) */
+            --palette-4: #bde0fe; /* 淺藍 */
+            --palette-5: #a2d2ff; /* 天藍 (柱子) */
+            
+            --pixel-white: #ffffff;
+            --pixel-red: #ff4d6d;
+            --pixel-brown: #3d261e;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background: var(--palette-1);
+            font-family: 'DotGothic16', 'Press Start 2P', sans-serif;
+            color: #4a4e69; touch-action: manipulation;
+        }
+
+        /* 掃描線濾鏡增加 8-bit Vibe */
+        body::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.05) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none; z-index: 1000;
+        }
+
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 10; pointer-events: none;
+        }
+
+        /* 說明頁漂浮裝飾 */
+        .decor {
+            position: absolute;
+            font-size: 30px;
+            animation: float 4s ease-in-out infinite;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+
+        #start-screen, #fail-screen {
+            background: rgba(255, 255, 255, 0.95); padding: 30px; border: 6px solid var(--palette-3);
+            text-align: center; pointer-events: auto; image-rendering: pixelated;
+            box-shadow: 10px 10px 0px var(--palette-2); max-width: 90%;
+            max-height: 90vh; overflow-y: auto; border-radius: 4px;
+            position: relative;
+        }
+
+        #fail-screen { border-color: var(--pixel-red); display: none; }
+
+        h1 { font-size: 24px; color: var(--palette-3); line-height: 1.4; margin: 0; font-family: 'Press Start 2P', cursive; text-shadow: 2px 2px var(--palette-2); }
+        .sub-title { font-size: 18px; display: block; margin-top: 5px; color: #6d597a; }
+        p { font-size: 16px; line-height: 1.6; margin: 15px 0; font-weight: bold; }
+
+        .legend {
+            background: var(--palette-2);
+            padding: 15px; margin: 15px 0;
+            border: 3px solid var(--palette-3);
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 12px; text-align: left; font-size: 14px;
+            color: #4a4e69;
+        }
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+
+        .btn {
+            background: var(--palette-3); color: white; border: none;
+            padding: 15px 30px; font-family: 'DotGothic16', sans-serif;
+            font-size: 18px; font-weight: bold; cursor: pointer;
+            box-shadow: 4px 4px 0px var(--palette-2); margin-top: 5px;
+        }
+
+        .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px var(--palette-2); }
+
+        #hud {
+            position: absolute; top: 20px; left: 0; width: 100%;
+            display: flex; flex-direction: column; align-items: center;
+            gap: 8px; pointer-events: none; opacity: 0; transition: opacity 0.5s;
+        }
+
+        .stat-box {
+            font-size: 12px; background: rgba(255, 255, 255, 0.85);
+            padding: 6px 12px; border: 2px solid var(--palette-3);
+            color: #4a4e69; font-weight: bold;
+        }
+
+        #hp-bar { display: flex; gap: 5px; }
+
+        #end-screen {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 200, 221, 0.4); backdrop-filter: blur(4px); z-index: 100; flex-direction: column;
+            justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;
+        }
+
+        .pixel-card {
+            background: #fff; color: #000; padding: 30px; border: 6px solid var(--palette-3);
+            max-width: 500px; position: relative; box-shadow: 12px 12px 0px var(--palette-2);
+            margin-bottom: 20px;
+        }
+
+        .pixel-card h2 { font-family: 'Press Start 2P', cursive; font-size: 14px; margin-bottom: 20px; line-height: 1.5; color: var(--palette-3); }
+        .pixel-card p { color: #4a4e69; font-family: 'DotGothic16', sans-serif; font-size: 20px; line-height: 1.5; margin: 12px 0; }
+
+        #end-challenge {
+            background: #ffffff;
+            border: 3px solid var(--palette-3);
+            padding: 12px 20px;
+            max-width: 450px;
+            font-size: 16px;
+            color: #4a4e69;
+            box-shadow: 6px 6px 0px var(--palette-1);
+            margin-bottom: 10px;
+            text-align: center;
+            z-index: 101;
+            font-weight: bold;
+        }
+
+        canvas { display: block; image-rendering: pixelated; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <!-- 說明頁裝飾背景 -->
+        <div class="decor" style="top: 10%; left: 10%;">☁️</div>
+        <div class="decor" style="top: 20%; right: 15%; animation-delay: 1s;">❤️</div>
+        <div class="decor" style="bottom: 15%; left: 20%; animation-delay: 2s;">💝</div>
+        <div class="decor" style="bottom: 10%; right: 10%; animation-delay: 0.5s;">☁️</div>
+        <div class="decor" style="top: 40%; left: 5%; animation-delay: 1.5s;">💗</div>
+
+        <div id="start-screen">
+            <h1>Taipei <span class="sub-title">to</span> Dallas</h1>
+            <p>跨越 12,250 公里的距離</p>
+            
+            <div class="legend">
+                <div class="legend-item"><span style="font-size:18px">❤️💝💐</span> 禮物加分</div>
+                <div class="legend-item"><span style="font-size:18px">🧱</span> 撞柱即死</div>
+                <div class="legend-item"><span style="font-size:18px">💬💩💣</span> 扣生命值</div>
+                <div class="legend-item"><span style="font-size:18px">⬇️</span> 落地即死</div>
+            </div>
+
+            <p style="font-size: 14px; color: #6d597a;">[ 幫助彭彭寶飛向寶的身邊 ]</p>
+            <p style="font-size: 13px; color: var(--palette-3); margin-top: -5px;">可以戴上耳機以享受最佳遊戲體驗！🎵</p>
+            <button class="btn" onclick="startGame()">任務開始 MISSION START</button>
+        </div>
+
+        <div id="fail-screen">
+            <h1 style="color: var(--pixel-red);">MISSION FAILED</h1>
+            <p id="fail-msg">彭彭寶不幸墜毀了...</p>
+            <p>彭彭寶，快振作起來飛向寶！</p>
+            <button class="btn" style="background: var(--pixel-red); box-shadow: 4px 4px 0px #b91c1c;" onclick="location.reload()">重新挑戰 RETRY</button>
+        </div>
+    </div>
+
+    <div id="hud">
+        <div class="stat-box">距離 DIST: <span id="dist-val">12250</span> KM</div>
+        <div class="stat-box">禮物 GIFTS: <span id="heart-val">0</span>/10</div>
+        <div id="hp-bar"></div>
+    </div>
+
+    <div id="end-screen">
+        <div class="pixel-card">
+            <h2 style="text-align: center;">HAPPY VALENTINE'S DAY!</h2>
+            <p style="text-align: center; font-weight: bold; font-family: 'Press Start 2P'; font-size: 14px; color: var(--palette-3);">STAGE CLEAR!</p>
+            <p>親愛的 彭彭寶，</p>
+            <p id="end-msg-p1">雖然我們現在隔著 14 小時的時差...</p>
+            <p id="end-msg-p2">但我會帶著這 10 份滿載愛意的禮物，在台北想著你。</p>
+            <p>再過 <span style="color: var(--palette-3); font-weight: bold;">6 個月</span>，我們就能見面了！</p>
+            <p style="text-align: right; margin-top: 10px; font-size: 18px;">- 彭彭寶的寶 -</p>
+        </div>
+        
+        <div id="end-challenge"></div>
+        
+        <button class="btn" style="background: white; color: var(--palette-3); pointer-events: auto;" onclick="location.reload()">重新起飛 REPLAY</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const hud = document.getElementById('hud');
+        const hpBar = document.getElementById('hp-bar');
+        const startScreen = document.getElementById('start-screen');
+        const failScreen = document.getElementById('fail-screen');
+        const failMsg = document.getElementById('fail-msg');
+        const endScreen = document.getElementById('end-screen');
+        const endMsgP2 = document.getElementById('end-msg-p2');
+        const endChallenge = document.getElementById('end-challenge');
+        const distVal = document.getElementById('dist-val');
+        const heartVal = document.getElementById('heart-val');
+
+        // --- 音效系統 (Web Audio API) ---
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playNote(freq, type, duration, volume = 0.1) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playJumpSound() { playNote(440, 'triangle', 0.2, 0.05); playNote(554, 'triangle', 0.1, 0.05); }
+        function playCollectSound() { playNote(880, 'square', 0.1, 0.05); playNote(1046, 'square', 0.2, 0.05); }
+        function playHitSound() { playNote(150, 'sawtooth', 0.3, 0.1); }
+        function playWinMusic() {
+            const notes = [523, 659, 783, 1046];
+            notes.forEach((f, i) => setTimeout(() => playNote(f, 'square', 0.5, 0.05), i * 150));
+        }
+        function playFailMusic() {
+            const notes = [330, 293, 261];
+            notes.forEach((f, i) => setTimeout(() => playNote(f, 'sawtooth', 0.6, 0.05), i * 200));
+        }
+
+        let bgmInterval;
+        function startBGM() {
+            const melody = [349, 392, 440, 523, 440, 392, 349, 392];
+            let step = 0;
+            bgmInterval = setInterval(() => {
+                if (gameActive) {
+                    playNote(melody[step % melody.length], 'sine', 0.4, 0.03);
+                    step++;
+                }
+            }, 500);
+        }
+
+        let gameActive = false;
+        let isVictory = false;
+        let score = 0;
+        let hp = 3;
+        let distance = 12250;
+        let particles = [];
+        let items = [];
+        let pillars = [];
+        let clouds = [];
+        let frameCount = 0;
+        let winReason = "";
+
+        const plane = { x: 60, y: 0, w: 45, h: 50, velocity: 0, gravity: 0.22, lift: -5.5 };
+        const itemTypes = ['heart', 'chocolate', 'flower'];
+        const obstacleTypes = ['no_reply', 'poopoo', 'bomb'];
+        const victoryPalette = ['#cdb4db', '#ffc8dd', '#ffafcc', '#bde0fe', '#a2d2ff'];
+
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            plane.y = canvas.height / 2;
+            updateHP();
+            clouds = [];
+            for(let i=0; i<8; i++) {
+                clouds.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * (canvas.height * 0.8),
+                    speed: 0.5 + Math.random() * 1.0,
+                    blocks: generateCloudBlocks()
+                });
+            }
+        }
+
+        function generateCloudBlocks() {
+            let blocks = [];
+            for(let i=0; i<3; i++) {
+                let width = 5 + Math.floor(Math.random() * 6);
+                for(let j=0; j<width; j++) blocks.push({dx: j * 12, dy: i * 12});
+            }
+            return blocks;
+        }
+
+        function updateHP() {
+            hpBar.innerHTML = '';
+            for(let i=0; i<3; i++) {
+                const h = document.createElement('span');
+                h.innerHTML = i < hp ? '❤️' : '🖤';
+                h.style.fontSize = '24px';
+                hpBar.appendChild(h);
+            }
+        }
+
+        function startGame() {
+            initAudio();
+            gameActive = true;
+            isVictory = false;
+            startScreen.classList.add('hidden');
+            document.querySelectorAll('.decor').forEach(el => el.style.display = 'none');
+            hud.style.opacity = '1';
+            startBGM();
+            requestAnimationFrame(update);
+        }
+
+        function gameOver(msg) {
+            gameActive = false;
+            clearInterval(bgmInterval);
+            playFailMusic();
+            failMsg.innerText = msg;
+            failScreen.style.display = 'block';
+        }
+
+        const handleAction = (e) => {
+            if(gameActive) {
+                plane.velocity = plane.lift;
+                playJumpSound();
+                if(e.type === 'touchstart') e.preventDefault();
+            }
+        };
+
+        window.addEventListener('mousedown', handleAction);
+        window.addEventListener('touchstart', handleAction, {passive: false});
+
+        function spawnObjects() {
+            frameCount++;
+            if(frameCount % 80 === 0) {
+                const isObs = Math.random() < 0.38;
+                items.push({
+                    x: canvas.width + 50,
+                    y: 100 + Math.random() * (canvas.height - 200),
+                    type: isObs ? obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)] : itemTypes[Math.floor(Math.random() * itemTypes.length)],
+                    isObstacle: isObs, collected: false, osc: 0
+                });
+            }
+            if(frameCount % 150 === 0) {
+                const gap = 250;
+                const minH = 70;
+                const topH = minH + Math.random() * (canvas.height - gap - minH * 2);
+                pillars.push({ x: canvas.width + 100, w: 70, top: topH, bottom: canvas.height - topH - gap });
+            }
+        }
+
+        function createVictoryBurst() {
+            for(let i=0; i<150; i++) {
+                const color = victoryPalette[Math.floor(Math.random() * victoryPalette.length)];
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height + 50,
+                    vx: (Math.random() - 0.5) * 18,
+                    vy: -Math.random() * 25 - 8,
+                    life: 2.0 + Math.random() * 2.0,
+                    color: color,
+                    type: Math.random() > 0.4 ? 'victory-heart' : 'confetti',
+                    rotation: Math.random() * Math.PI * 2,
+                    rVel: (Math.random() - 0.5) * 0.2,
+                    size: 6 + Math.random() * 10
+                });
+            }
+        }
+
+        function update() {
+            if(!gameActive && !isVictory && particles.length === 0) return;
+
+            if(gameActive) {
+                plane.velocity += plane.gravity;
+                plane.y += plane.velocity;
+                if(plane.y + plane.h >= canvas.height) { gameOver("落地墜毀了！別忘了點擊起飛～"); return; }
+                if(plane.y < 0) plane.y = 0;
+                
+                distance -= 6; 
+                distVal.innerText = Math.max(0, Math.floor(distance));
+                clouds.forEach(c => { c.x -= c.speed; if(c.x < -200) c.x = canvas.width + 50; });
+                spawnObjects();
+                
+                pillars.forEach((p, index) => {
+                    p.x -= 3.5;
+                    if(plane.x + plane.w - 10 > p.x && plane.x + 10 < p.x + p.w) {
+                        if(plane.y + 5 < p.top || plane.y + plane.h - 5 > canvas.height - p.bottom) { gameOver("撞到障礙柱子了！要小心飛喔～"); }
+                    }
+                    if(p.x < -100) pillars.splice(index, 1);
+                });
+
+                items.forEach((h, index) => {
+                    h.x -= 4; h.osc += 0.08;
+                    if(!h.isObstacle) h.y += Math.sin(h.osc) * 1.5;
+                    if(!h.collected && plane.x < h.x + 25 && plane.x + plane.w > h.x - 25 && plane.y < h.y + 25 && plane.y + plane.h > h.y - 25) {
+                        h.collected = true;
+                        if(h.isObstacle) {
+                            hp--; updateHP(); playHitSound();
+                            createPixelParticles(h.x, h.y, '#ff0000');
+                            if(hp <= 0) gameOver("彭彭寶，生命值耗盡了！再試一次？");
+                        } else {
+                            score++; heartVal.innerText = score; playCollectSound();
+                            createPixelParticles(h.x, h.y, '#ffafcc');
+                        }
+                    }
+                    if(h.x < -100) items.splice(index, 1);
+                });
+
+                if(distance <= 0) { winReason = "distance"; win(); } 
+                else if(score >= 10) { winReason = "gifts"; win(); }
+            }
+
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        function win() {
+            gameActive = false;
+            isVictory = true;
+            clearInterval(bgmInterval);
+            playWinMusic();
+            createVictoryBurst();
+
+            if(winReason === "distance") {
+                endMsgP2.innerText = "我終於跨越了 12,250 公里的距離，把這份想念送到你身邊了。";
+                endChallenge.innerText = "既然距離不是問題，下次要不要挑戰蒐集滿 10 份禮物送給我？🎁";
+            } else {
+                endMsgP2.innerText = "但我會帶著這 10 份滿載愛意的禮物，在台北想著你。";
+                endChallenge.innerText = "禮物我收到了！下次要不要挑戰飛滿 12,250 公里，直接飛到我身邊？✈️";
+            }
+            
+            setTimeout(() => { endScreen.style.display = 'flex'; }, 800);
+        }
+
+        function createPixelParticles(x, y, color) {
+            for(let i=0; i<12; i++) {
+                particles.push({ x, y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, life: 1.0, color: color, type: 'hit' });
+            }
+        }
+
+        // 手繪彭彭寶像素角色
+        function drawPlayer(x, y) {
+            const s = 4;
+            ctx.save();
+            ctx.translate(x, y);
+            const p = { skin: '#d4a373', hair: '#000000', shorts: '#2b2d42', glasses: '#4a4e69', lens: '#ffffff', mouth: '#e63946', flowerP: '#ffafcc', flowerY: '#ffb703', flowerG: '#2d6a4f' };
+            ctx.fillStyle = p.hair; ctx.fillRect(1*s, 0, 8*s, 3*s); ctx.fillRect(0, 2*s, 10*s, 4*s);
+            ctx.fillStyle = p.skin; ctx.fillRect(2*s, 3*s, 7*s, 7*s); 
+            ctx.fillStyle = p.glasses; ctx.fillRect(5*s, 4*s, 4*s, 3*s); ctx.fillStyle = p.lens; ctx.fillRect(6*s, 5*s, 2*s, 1*s);
+            ctx.fillStyle = p.mouth; ctx.fillRect(6*s, 8*s, 1*s, 1*s);
+            ctx.fillStyle = p.skin; ctx.fillRect(1*s, 10*s, 8*s, 4*s); ctx.fillRect(8*s, 11*s, 3*s, 1*s);
+            ctx.fillStyle = p.shorts; ctx.fillRect(1*s, 13*s, 8*s, 2*s);
+            ctx.fillStyle = p.skin; ctx.fillRect(1*s, 15*s, 2*s, 1*s); ctx.fillRect(7*s, 15*s, 2*s, 1*s);
+            ctx.fillStyle = p.flowerG; ctx.fillRect(9*s, 9*s, 1*s, 3*s); ctx.fillRect(8*s, 10*s, 1*s, 1*s);
+            ctx.fillStyle = p.flowerP; ctx.fillRect(8*s, 7*s, 3*s, 3*s); ctx.fillStyle = p.flowerY; ctx.fillRect(9*s, 8*s, 1*s, 1*s);
+            ctx.restore();
+        }
+
+        function drawPixelHeart(x, y, size, color) {
+            ctx.fillStyle = color;
+            const d = [[0,1,1,0,1,1,0],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[0,1,1,1,1,1,0],[0,0,1,1,1,0,0],[0,0,0,1,0,0,0]];
+            d.forEach((row, ri) => { row.forEach((pixel, ci) => { if(pixel) ctx.fillRect(x + ci*size - (7*size/2), y + ri*size - (6*size/2), size, size); }); });
+        }
+
+        function drawPixelItem(x, y, type) {
+            if(type === 'heart') drawPixelHeart(x, y, 6, '#ff4d6d');
+            else if(type === 'chocolate') {
+                ctx.fillStyle = '#3d261e'; const heart = [[0,1,1,0,1,1,0],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[0,1,1,1,1,1,0],[0,0,1,1,1,0,0],[0,0,0,1,0,0,0]];
+                drawMatrix(x, y, heart, 6); ctx.fillStyle = '#fef3c7'; ctx.fillRect(x-12, y-6, 8, 2); ctx.fillRect(x-2, y-2, 10, 2); ctx.fillRect(x-8, y+4, 12, 2);
+            } else if(type === 'flower') {
+                ctx.fillStyle = '#e63946'; ctx.fillRect(x-10, y-10, 20, 10); ctx.fillStyle = '#2d6a4f'; ctx.fillRect(x-2, y, 4, 15);
+            } else if(type === 'no_reply') {
+                ctx.fillStyle = '#0077ff'; ctx.fillRect(x-22, y-15, 44, 30); ctx.beginPath(); ctx.moveTo(x-5, y+15); ctx.lineTo(x-15, y+25); ctx.lineTo(x+5, y+15); ctx.fill();
+                ctx.fillStyle = 'white'; ctx.font = 'bold 16px "DotGothic16"'; ctx.textAlign = 'center'; ctx.fillText('已讀', x, y+6);
+            } else if(type === 'poopoo') {
+                ctx.fillStyle = '#795548'; const d = [[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1]]; drawMatrix(x, y, d, 8);
+            } else if(type === 'bomb') {
+                ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#ffb703'; ctx.fillRect(x, y-22, 4, 8);
+            }
+        }
+
+        function drawPillar(p) {
+            ctx.fillStyle = '#a2d2ff'; ctx.fillRect(p.x, 0, p.w, p.top); ctx.fillRect(p.x, canvas.height - p.bottom, p.w, p.bottom);
+            ctx.fillStyle = '#bde0fe'; ctx.fillRect(p.x, p.top - 15, p.w, 15); ctx.fillRect(p.x, canvas.height - p.bottom, p.w, 15);
+        }
+
+        function drawMatrix(x, y, matrix, size) {
+            matrix.forEach((row, ri) => { row.forEach((pixel, ci) => { if(pixel) ctx.fillRect(x + ci*size - (matrix[0].length*size/2), y + ri*size - (matrix.length*size/2), size, size); }); });
+        }
+
+        function draw() {
+            ctx.fillStyle = '#cdb4db'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'; clouds.forEach(c => { c.blocks.forEach(b => ctx.fillRect(c.x + b.dx, c.y + b.dy, 12, 12)); });
+            pillars.forEach(drawPillar); items.forEach(h => { if(!h.collected) drawPixelItem(h.x, h.y, h.type); });
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; if(isVictory) p.vy += 0.3; p.life -= 0.02; p.rotation += p.rVel || 0;
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation || 0); ctx.globalAlpha = Math.max(0, p.life);
+                if(p.type === 'confetti') { ctx.fillStyle = p.color; ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size/2); }
+                else if(p.type === 'victory-heart') { drawPixelHeart(0, 0, 3, p.color); }
+                else { ctx.fillStyle = p.color; ctx.fillRect(0, 0, 6, 6); }
+                ctx.restore(); if(p.life <= 0) particles.splice(i, 1);
+            });
+            if(!isVictory) drawPlayer(plane.x, plane.y);
+        }
+        window.addEventListener('resize', init);
+        init();
+    </script>
+</body>
+</html>
